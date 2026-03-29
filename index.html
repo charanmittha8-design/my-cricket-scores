@@ -2,91 +2,86 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TATA IPL 2026 - Master Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPL LIVE HUB - PRO</title>
     <style>
-        :root { --bg: #0d1117; --gold: #facc15; --card: #161b22; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; text-align: center; margin: 0; padding: 20px; }
-        #login-screen { background: var(--card); padding: 40px; border-radius: 20px; margin-top: 100px; display: inline-block; border: 1px solid #30363d; }
-        input { padding: 15px; border-radius: 10px; border: 1px solid #30363d; background: #0d1117; color: white; width: 250px; margin-bottom: 20px; }
-        .btn { background: var(--gold); color: black; border: none; padding: 15px 40px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        #main-content { display: none; max-width: 800px; margin: 0 auto; }
-        .match-card { background: var(--card); border-radius: 25px; padding: 30px; border: 1px solid #30363d; margin-top: 20px; position: relative; }
-        .live-tag { position: absolute; top: 20px; right: 20px; background: #da3633; padding: 5px 15px; border-radius: 5px; font-size: 12px; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 50% { opacity: 0.6; } }
-        .score { font-size: 60px; color: var(--gold); font-weight: 800; margin: 20px 0; }
-        .p-box { display: flex; justify-content: space-around; background: #21262d; padding: 20px; border-radius: 15px; margin-top: 20px; border: 1px dashed #444; }
-        .status { background: #238636; padding: 15px; border-radius: 10px; margin-top: 20px; font-weight: bold; }
+        :root { --blue: #004ba0; --gold: #facc15; --bg: #0a0a0a; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: #1a1a1a; padding: 30px; border-radius: 20px; border-top: 6px solid var(--gold); text-align: center; width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .match-name { font-size: 14px; text-transform: uppercase; color: #888; letter-spacing: 1px; }
+        .score { font-size: 45px; font-weight: bold; margin: 15px 0; color: var(--gold); }
+        .players { background: #252525; padding: 15px; border-radius: 10px; margin: 15px 0; text-align: left; font-size: 14px; line-height: 1.6; }
+        .status { font-size: 14px; color: #64ffda; font-style: italic; min-height: 20px; }
+        .btn { background: var(--gold); color: black; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 15px; width: 100%; transition: 0.3s; }
+        .btn:hover { background: #eab308; }
+        .timer { font-size: 11px; margin-top: 15px; color: #555; }
     </style>
 </head>
 <body>
 
-    <div id="login-screen">
-        <h1 style="color:var(--gold)">IPL COMMAND CENTER</h1>
-        <input type="password" id="pass" placeholder="Enter Access Code">
-        <br><button class="btn" onclick="start()">ACCESS STADIUM</button>
+<div class="card">
+    <div id="match-name" class="match-name">IPL 2026 - Loading...</div>
+    <div class="score" id="score">-- / --</div>
+    
+    <div class="players">
+        🏏 <span id="bat1">Waiting for Batter...</span><br>
+        🏏 <span id="bat2">...</span><br>
+        🥎 <span id="bowl">Waiting for Bowler...</span>
     </div>
 
-    <div id="main-content">
-        <h1>LIVE MATCH TRACKER</h1>
-        <div id="display">
-            <div class="match-card">Connecting to Wankhede...</div>
-        </div>
-        <button class="btn" onclick="loadScore()" style="margin-top:20px; background:#2ea44f; color:white;">🔄 REFRESH SCORE</button>
-    </div>
+    <div class="status" id="status">Syncing with Stadium...</div>
+    
+    <button class="btn" onclick="getScore()">UPDATE NOW</button>
+    <div class="timer" id="timer">Next Auto-Update: 90s</div>
+</div>
 
-    <script>
-        let lastUpdate = 0;
+<script>
+    let timeLeft = 90;
+    // Your verified RapidAPI Key
+    const API_KEY = "857d7027e0mshdabb5755a5a885ep1ce586jsnb2cd313b21e2"; 
 
-        function start() {
-            if (document.getElementById('pass').value === "ipl2026") {
-                document.getElementById('login-screen').style.display = "none";
-                document.getElementById('main-content').style.display = "block";
-                loadScore();
-                setInterval(loadScore, 45000); // Auto-update every 45s
-            } else { alert("Wrong Code!"); }
-        }
-
-        async function loadScore() {
-            const now = Date.now();
-            if (now - lastUpdate < 15000) return; // Prevent "Spam" clicks from blocking you
+    async function getScore() {
+        document.getElementById('status').innerText = "Connecting...";
+        try {
+            // Step 1: Get the list of live matches
+            const response = await fetch('https://cricbuzz-cricket.p.rapidapi.com/matches/v1/live', {
+                headers: { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': 'cricbuzz-cricket.p.rapidapi.com' }
+            });
+            const data = await response.json();
             
-            const display = document.getElementById('display');
-            const api_key = '857d7027e0mshdabb5755a5a885ep1ce586jsnb2cd313b21e2';
+            // Step 2: Extract Match Info
+            const match = data.typeMatches[0].seriesMatches[0].seriesAdWrapper.matches[0];
+            const info = match.matchInfo;
+            const score = match.matchScore;
+
+            // Update UI
+            document.getElementById('match-name').innerText = info.team1.teamName + " vs " + info.team2.teamName;
             
-            try {
-                const res = await fetch('https://cricbuzz-cricket.p.rapidapi.com/matches/v1/live', {
-                    headers: { 'x-rapidapi-key': api_key, 'x-rapidapi-host': 'cricbuzz-cricket.p.rapidapi.com' }
-                });
-                const data = await res.json();
-                lastUpdate = Date.now();
-                
-                let html = "";
-                data.typeMatches.forEach(t => {
-                    t.seriesMatches?.forEach(s => {
-                        if (s.seriesAdWrapper?.seriesName.includes("IPL")) {
-                            s.seriesAdWrapper.matches.forEach(m => {
-                                const sc = m.matchScore;
-                                html += `
-                                <div class="match-card">
-                                    <div class="live-tag">LIVE</div>
-                                    <div style="color:#8b949e">${m.matchInfo.team1.teamName} vs ${m.matchInfo.team2.teamName}</div>
-                                    <div class="score">${sc?.team1Score?.inngs1?.runs || '120'}/${sc?.team1Score?.inngs1?.wickets || '0'} <span style="font-size:20px; color:white;">(${sc?.team1Score?.inngs1?.overs || '9.5'} ov)</span></div>
-                                    <div class="p-box">
-                                        <div><small>BATTERS</small><br><b>R. Sharma & R. Rickelton</b></div>
-                                        <div style="border-left:1px solid #444"></div>
-                                        <div><small>BOWLER</small><br><b>Kartik Tyagi</b></div>
-                                    </div>
-                                    <div class="status">📢 ${m.matchInfo.status}</div>
-                                </div>`;
-                            });
-                        }
-                    });
-                });
-                display.innerHTML = html || "<div class='match-card'>No active IPL match.</div>";
-            } catch (e) {
-                display.innerHTML = "<div class='match-card' style='color:#da3633'>⚠️ API Limit Reached. Don't worry, Rohit is on 65* and Rickelton is on 53*. Try again in 2 mins!</div>";
-            }
+            // Get current innings score
+            const currentScore = score.team1Score ? score.team1Score.inngs1 : {runs: 0, wickets: 0, overs: 0};
+            document.getElementById('score').innerText = `${currentScore.runs}/${currentScore.wickets} (${currentScore.overs})`;
+            document.getElementById('status').innerText = match.status;
+
+            // Player logic (One-line data injection)
+            document.getElementById('bat1').innerText = "Batting: " + (match.matchScore.batsman ? match.matchScore.batsman[0].name : "Checking...");
+            document.getElementById('bat2').innerText = "Partnership: " + (match.matchScore.batsman ? match.matchScore.batsman[1].name : "Checking...");
+            document.getElementById('bowl').innerText = "Bowling: " + (match.matchScore.bowler ? match.matchScore.bowler[0].name : "Checking...");
+
+        } catch (error) {
+            document.getElementById('status').innerText = "Limit Reached! Wait 2 mins.";
         }
-    </script>
+        timeLeft = 90; 
+    }
+
+    // Countdown logic
+    setInterval(() => {
+        timeLeft--;
+        document.getElementById('timer').innerText = "Next Auto-Update: " + timeLeft + "s";
+        if (timeLeft <= 0) { getScore(); }
+    }, 1000);
+
+    // Load immediately on open
+    getScore();
+</script>
 </body>
 </html>
