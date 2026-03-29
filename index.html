@@ -2,38 +2,38 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Charan's IPL Hub</title>
+    <title>TATA IPL 2026 - Charan</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: white; text-align: center; padding: 20px; }
         #login-screen { margin-top: 100px; }
-        input { padding: 12px; border-radius: 8px; border: none; width: 200px; margin-bottom: 10px; background: #1c2128; color: white; border: 1px solid #30363d; }
-        button { background: #facc15; color: black; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        #main-content { display: none; max-width: 600px; margin: 0 auto; }
-        .section-title { border-left: 5px solid #facc15; text-align: left; padding-left: 12px; margin: 30px 0 15px; color: #facc15; font-size: 18px; }
-        .match-card { background: #1c2128; border-radius: 15px; padding: 25px; border: 1px solid #30363d; }
-        .score-big { font-size: 42px; color: #facc15; font-weight: bold; margin: 10px 0; }
-        .commentary { background: #238636; color: white; padding: 15px; border-radius: 8px; margin-top: 15px; font-weight: bold; font-size: 16px; }
-        .upcoming-card { background: #161b22; border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; border-left: 4px solid #30363d; }
+        input { padding: 12px; border-radius: 8px; border: none; width: 220px; margin-bottom: 10px; background: #1c2128; color: white; border: 1px solid #30363d; }
+        button { background: #2ea44f; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        #main-content { display: none; max-width: 700px; margin: 0 auto; }
+        .section-title { border-left: 5px solid #facc15; text-align: left; padding-left: 12px; margin: 30px 0 15px; color: #facc15; font-size: 18px; font-weight: bold; text-transform: uppercase; }
+        .match-card { background: #161b22; border-radius: 20px; padding: 30px; border: 1px solid #30363d; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+        .score-big { font-size: 50px; color: #facc15; font-weight: bold; margin: 15px 0; }
+        .live-status { background: #238636; color: white; padding: 15px; border-radius: 12px; font-size: 18px; font-weight: bold; margin-top: 20px; }
+        .upcoming-card { background: #1c2128; border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #30363d; }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
-        <h1 style="color: #facc15;">🏏 Charan's IPL Hub</h1>
-        <input type="password" id="passInput" placeholder="Secret Code...">
+        <h1 style="color: #facc15;">🏏 TATA IPL 2026</h1>
+        <input type="password" id="passInput" placeholder="Enter Stadium Code">
         <br><button onclick="checkPass()">ENTER STADIUM</button>
     </div>
 
     <div id="main-content">
-        <h2 style="margin-bottom: 5px;">TATA IPL 2026</h2>
+        <h2 style="letter-spacing: 2px;">TATA IPL 2026</h2>
         
-        <div class="section-title">LIVE NOW</div>
-        <div id="live-list">Connecting to API...</div>
+        <div class="section-title">Live Now</div>
+        <div id="live-list">Connecting to Wankhede...</div>
 
-        <div class="section-title">UPCOMING FIXTURES</div>
-        <div id="upcoming-list">Loading...</div>
+        <div class="section-title">Upcoming Fixtures</div>
+        <div id="upcoming-list">Fetching schedule...</div>
 
-        <button onclick="fetchScores()" style="margin-top:20px; background:#2ea44f; color:white;">🔄 REFRESH SCOREBOARD</button>
+        <button onclick="fetchScores()" style="margin-top:30px;">🔄 REFRESH SCOREBOARD</button>
     </div>
 
     <script>
@@ -52,40 +52,49 @@
             const headers = { 'x-rapidapi-key': '857d7027e0mshdabb5755a5a885ep1ce586jsnb2cd313b21e2', 'x-rapidapi-host': 'cricbuzz-cricket.p.rapidapi.com' };
 
             try {
+                // Fetch LIVE
                 const liveRes = await fetch('https://cricbuzz-cricket.p.rapidapi.com/matches/v1/live', { headers });
                 const liveData = await liveRes.json();
                 liveBox.innerHTML = "";
+                let found = false;
 
                 liveData.typeMatches.forEach(type => {
                     type.seriesMatches.forEach(series => {
-                        if (series.seriesAdWrapper && series.seriesAdWrapper.seriesName.includes("Indian Premier League")) {
+                        if (series.seriesAdWrapper?.seriesName.includes("Indian Premier League")) {
+                            found = true;
                             series.seriesAdWrapper.matches.forEach(m => {
                                 const sc = m.matchScore;
                                 liveBox.innerHTML += `
                                     <div class="match-card">
-                                        <h3>${m.matchInfo.team1.teamName} vs ${m.matchInfo.team2.teamName}</h3>
-                                        <div class="score-big">${sc?.team1Score?.inngs1?.runs || 0}/${sc?.team1Score?.inngs1?.wickets || 0} <small>(${sc?.team1Score?.inngs1?.overs || 0} ov)</small></div>
-                                        <div class="commentary">${m.matchInfo.status}</div>
+                                        <div style="color:#8b949e; margin-bottom:10px;">${m.matchInfo.team1.teamName} vs ${m.matchInfo.team2.teamName}</div>
+                                        <div class="score-big">${sc?.team1Score?.inngs1?.runs || 0}/${sc?.team1Score?.inngs1?.wickets || 0} <small style="font-size:20px; color:white;">(${sc?.team1Score?.inngs1?.overs || 0} ov)</small></div>
+                                        <div class="live-status">${m.matchInfo.status}</div>
                                     </div>`;
                             });
                         }
                     });
                 });
+                if(!found) liveBox.innerHTML = "<p>No Live IPL Match</p>";
 
+                // Fetch UPCOMING
                 const upRes = await fetch('https://cricbuzz-cricket.p.rapidapi.com/matches/v1/upcoming', { headers });
                 const upData = await upRes.json();
                 upBox.innerHTML = "";
                 upData.typeMatches.forEach(type => {
                     type.seriesMatches.forEach(series => {
-                        if (series.seriesAdWrapper && series.seriesAdWrapper.seriesName.includes("Indian Premier League")) {
+                        if (series.seriesAdWrapper?.seriesName.includes("Indian Premier League")) {
                             series.seriesAdWrapper.matches.slice(0, 4).forEach(m => {
                                 let d = new Date(parseInt(m.matchInfo.startDate)).toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short' });
-                                upBox.innerHTML += `<div class="upcoming-card"><div><b>${m.matchInfo.team1.teamName} vs ${m.matchInfo.team2.teamName}</b></div><div><b>${d}</b></div></div>`;
+                                upBox.innerHTML += `
+                                    <div class="upcoming-card">
+                                        <b>${m.matchInfo.team1.teamName} vs ${m.matchInfo.team2.teamName}</b>
+                                        <b style="color:#facc15">${d}</b>
+                                    </div>`;
                             });
                         }
                     });
                 });
-            } catch (e) { liveBox.innerHTML = "Offline - Refreshing..."; }
+            } catch (e) { console.log(e); }
         }
     </script>
 </body>
