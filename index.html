@@ -2,43 +2,52 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sagar's Live IPL Dashboard</title>
+    <title>Charan's IPL Pro Hub</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #051622; color: white; text-align: center; margin: 0; padding: 20px; }
-        h1 { color: #deb992; text-shadow: 2px 2px 4px #1ba098; }
-        .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-top: 30px; }
+        body { font-family: 'Arial', sans-serif; background-color: #0f172a; color: white; margin: 0; padding: 20px; }
+        .header { background: #1e293b; color: #facc15; padding: 20px; text-align: center; border-radius: 12px; border-bottom: 5px solid #3b82f6; margin-bottom: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
         
         .match-card { 
-            background: #182628; border: 1px solid #1ba098; border-radius: 12px; 
-            padding: 20px; width: 320px; transition: transform 0.3s;
-            box-shadow: 0 4px 15px rgba(27, 160, 152, 0.2);
+            background: #1e293b; border-radius: 15px; padding: 20px; margin-bottom: 20px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); border: 1px solid #334155;
         }
-        .match-card:hover { transform: translateY(-5px); border-color: #deb992; }
+        .series-tag { font-size: 11px; background: #3b82f6; color: white; padding: 3px 8px; border-radius: 5px; text-transform: uppercase; font-weight: bold; }
         
-        .team-names { font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #deb992; }
-        .score-box { font-size: 24px; font-weight: 800; color: #ffffff; background: #0b1d21; padding: 10px; border-radius: 8px; margin: 10px 0; border: 1px dashed #1ba098; }
-        .status-msg { font-size: 14px; color: #1ba098; min-height: 40px; }
+        .teams-container { display: flex; justify-content: space-between; align-items: center; margin: 15px 0; }
+        .team-name { font-size: 20px; font-weight: bold; width: 40%; }
+        .vs { color: #94a3b8; font-style: italic; }
         
-        .ipl-tag { background: #ffca3a; color: black; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; float: right; }
-        button { background: #1ba098; color: white; border: none; padding: 12px 25px; border-radius: 25px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 20px; }
-        button:hover { background: #deb992; color: #051622; }
+        .score-section { text-align: center; background: #0f172a; padding: 15px; border-radius: 10px; margin: 10px 0; border: 1px solid #334155; }
+        .big-score { font-size: 32px; font-weight: 800; color: #facc15; }
+        .overs { font-size: 14px; color: #94a3b8; }
+        
+        /* THE CRICBUZZ COMMENTARY STYLE */
+        .commentary-box { 
+            background: #facc15; color: #0f172a; padding: 12px; border-radius: 8px; 
+            font-weight: bold; font-size: 15px; margin-top: 15px; position: relative;
+        }
+        .commentary-box::before { content: "LIVE COMMENTARY"; display: block; font-size: 10px; opacity: 0.7; margin-bottom: 4px; }
+        
+        .venue { font-size: 12px; color: #64748b; margin-top: 10px; text-align: center; }
+        button { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
-    <h1>🏏 Sagar's Live Cricket Hub</h1>
-    <p id="time-display">Connecting to Cricbuzz Server...</p>
-    
-    <div id="matches-list" class="container">
-        </div>
+    <div class="header">
+        <h1 style="margin:0;">🏏 Charan's Live IPL Dashboard</h1>
+        <p style="font-size: 14px; opacity: 0.8;">Ball-by-Ball Updates & Real-Time Stats</p>
+    </div>
 
-    <button onclick="fetchScores()">Manual Refresh</button>
+    <div class="container">
+        <button onclick="fetchScores()">🔄 Refresh Match Data</button>
+        <div id="matches-list">Connecting to Stadium...</div>
+    </div>
 
     <script>
         async function fetchScores() {
             const list = document.getElementById('matches-list');
-            const url = 'https://cricbuzz-cricket.p.rapidapi.com/matches/v1/live';
             const options = {
                 method: 'GET',
                 headers: {
@@ -48,30 +57,46 @@
             };
 
             try {
-                const response = await fetch(url, options);
+                const response = await fetch('https://cricbuzz-cricket.p.rapidapi.com/matches/v1/live', options);
                 const data = await response.json();
-                list.innerHTML = ""; // Clear old cards
+                list.innerHTML = "";
 
                 data.typeMatches.forEach(typeGroup => {
                     typeGroup.seriesMatches.forEach(series => {
                         if (series.seriesAdWrapper) {
                             series.seriesAdWrapper.matches.forEach(match => {
-                                // Extract scores safely
-                                const s1 = match.matchScore?.team1Score?.inngs1;
-                                const s2 = match.matchScore?.team2Score?.inngs1;
+                                const info = match.matchInfo;
+                                const score = match.matchScore;
                                 
-                                const scoreText = (s1 || s2) 
-                                    ? `${s1?.runs || 0}/${s1?.wickets || 0} vs ${s2?.runs || 0}/${s2?.wickets || 0}`
-                                    : "Match Starting Soon";
-
-                                const isIPL = series.seriesAdWrapper.seriesName.includes("Indian Premier League");
+                                // Logic for Live Action/Commentary
+                                let commentaryText = info.status; 
+                                if (info.state === "Preview") {
+                                    commentaryText = "Players warming up. Match starts at 7:30 PM!";
+                                }
 
                                 const card = `
                                     <div class="match-card">
-                                        ${isIPL ? '<span class="ipl-tag">IPL 2026</span>' : ''}
-                                        <div class="team-names">${match.matchInfo.team1.teamName} vs ${match.matchInfo.team2.teamName}</div>
-                                        <div class="score-box">${scoreText}</div>
-                                        <div class="status-msg">${match.matchInfo.status}</div>
+                                        <span class="series-tag">${series.seriesAdWrapper.seriesName}</span>
+                                        <div class="teams-container">
+                                            <div class="team-name" style="text-align:left;">${info.team1.teamName}</div>
+                                            <div class="vs">vs</div>
+                                            <div class="team-name" style="text-align:right;">${info.team2.teamName}</div>
+                                        </div>
+                                        <div class="score-section">
+                                            <div class="big-score">
+                                                ${score?.team1Score?.inngs1?.runs || 0}/${score?.team1Score?.inngs1?.wickets || 0} 
+                                                <span class="overs">(${score?.team1Score?.inngs1?.overs || 0} ov)</span>
+                                            </div>
+                                            <div style="font-size: 12px; color:#94a3b8; margin: 5px 0;">compared to</div>
+                                            <div class="big-score" style="font-size: 24px; opacity: 0.8;">
+                                                ${score?.team2Score?.inngs1?.runs || 0}/${score?.team2Score?.inngs1?.wickets || 0}
+                                                <span class="overs">(${score?.team2Score?.inngs1?.overs || 0} ov)</span>
+                                            </div>
+                                        </div>
+                                        <div class="commentary-box">
+                                            ${commentaryText}
+                                        </div>
+                                        <div class="venue">📍 ${info.venueInfo.ground}, ${info.venueInfo.city}</div>
                                     </div>
                                 `;
                                 list.innerHTML += card;
@@ -79,16 +104,13 @@
                         }
                     });
                 });
-                document.getElementById('time-display').innerText = "Last Updated: " + new Date().toLocaleTimeString();
             } catch (error) {
-                list.innerHTML = "<h3>Server is busy. Please wait 2 minutes and refresh.</h3>";
+                list.innerHTML = "<p>API Busy. Refreshing in 2 minutes...</p>";
             }
         }
 
-        // Initial Load
         fetchScores();
-        // Auto-refresh every 60 seconds
-        setInterval(fetchScores, 60000);
+        setInterval(fetchScores, 180000); // 3-minute refresh to save your credits
     </script>
 </body>
 </html>
