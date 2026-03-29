@@ -7,17 +7,13 @@
         body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: white; text-align: center; padding: 20px; }
         #login-screen { margin-top: 100px; }
         input { padding: 12px; border-radius: 8px; border: none; width: 200px; margin-bottom: 10px; background: #1c2128; color: white; border: 1px solid #30363d; }
-        button { background: #facc15; color: black; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        button:hover { background: #eab308; transform: scale(1.05); }
+        button { background: #facc15; color: black; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         #main-content { display: none; max-width: 600px; margin: 0 auto; }
-        .section-title { border-left: 5px solid #facc15; text-align: left; padding-left: 12px; margin: 30px 0 15px; color: #facc15; font-size: 18px; font-weight: bold; }
-        .match-card { background: #1c2128; border-radius: 15px; padding: 25px; border: 1px solid #30363d; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 20px; }
+        .section-title { border-left: 5px solid #facc15; text-align: left; padding-left: 12px; margin: 30px 0 15px; color: #facc15; font-size: 18px; }
+        .match-card { background: #1c2128; border-radius: 15px; padding: 25px; border: 1px solid #30363d; }
         .score-big { font-size: 42px; color: #facc15; font-weight: bold; margin: 10px 0; }
-        .player-info { display: flex; justify-content: space-around; background: #21262d; padding: 12px; border-radius: 10px; margin: 15px 0; border: 1px dashed #444; font-size: 14px; }
-        .live-tag { background: #da3633; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; vertical-align: middle; margin-left: 10px; animation: blink 1.5s infinite; }
-        @keyframes blink { 50% { opacity: 0.5; } }
-        .upcoming-card { background: #161b22; border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #30363d; }
-        .commentary { background: #238636; color: white; padding: 12px; border-radius: 8px; margin-top: 15px; font-weight: bold; }
+        .commentary { background: #238636; color: white; padding: 15px; border-radius: 8px; margin-top: 15px; font-weight: bold; font-size: 16px; }
+        .upcoming-card { background: #161b22; border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; border-left: 4px solid #30363d; }
     </style>
 </head>
 <body>
@@ -31,13 +27,13 @@
     <div id="main-content">
         <h2 style="margin-bottom: 5px;">TATA IPL 2026</h2>
         
-        <div class="section-title">LIVE NOW <span class="live-tag">REC</span></div>
-        <div id="live-list">Searching for the ball...</div>
+        <div class="section-title">LIVE NOW</div>
+        <div id="live-list">Connecting to API...</div>
 
         <div class="section-title">UPCOMING FIXTURES</div>
-        <div id="upcoming-list">Loading the schedule...</div>
+        <div id="upcoming-list">Loading...</div>
 
-        <button id="refreshBtn" onclick="fetchScores()" style="margin-top:20px; background:#2ea44f; color:white;">🔄 REFRESH SCOREBOARD</button>
+        <button onclick="fetchScores()" style="margin-top:20px; background:#2ea44f; color:white;">🔄 REFRESH SCOREBOARD</button>
     </div>
 
     <script>
@@ -51,74 +47,45 @@
         }
 
         async function fetchScores() {
-            const btn = document.getElementById('refreshBtn');
             const liveBox = document.getElementById('live-list');
             const upBox = document.getElementById('upcoming-list');
-            
-            if(btn) btn.innerText = "⏳ FETCHING...";
-
-            const headers = {
-                'x-rapidapi-key': '857d7027e0mshdabb5755a5a885ep1ce586jsnb2cd313b21e2',
-                'x-rapidapi-host': 'cricbuzz-cricket.p.rapidapi.com'
-            };
+            const headers = { 'x-rapidapi-key': '857d7027e0mshdabb5755a5a885ep1ce586jsnb2cd313b21e2', 'x-rapidapi-host': 'cricbuzz-cricket.p.rapidapi.com' };
 
             try {
-                // 1. Fetch Live IPL
                 const liveRes = await fetch('https://cricbuzz-cricket.p.rapidapi.com/matches/v1/live', { headers });
                 const liveData = await liveRes.json();
                 liveBox.innerHTML = "";
-                let foundLive = false;
 
                 liveData.typeMatches.forEach(type => {
                     type.seriesMatches.forEach(series => {
                         if (series.seriesAdWrapper && series.seriesAdWrapper.seriesName.includes("Indian Premier League")) {
-                            foundLive = true;
                             series.seriesAdWrapper.matches.forEach(m => {
                                 const sc = m.matchScore;
-                                // We pull batsman/bowler from the status if available
                                 liveBox.innerHTML += `
                                     <div class="match-card">
-                                        <h3 style="margin:0">${m.matchInfo.team1.teamName} vs ${m.matchInfo.team2.teamName}</h3>
-                                        <div class="score-big">${sc?.team1Score?.inngs1?.runs || 0}/${sc?.team1Score?.inngs1?.wickets || 0} <small style="font-size:18px; color:white;">(${sc?.team1Score?.inngs1?.overs || 0} ov)</small></div>
-                                        
-                                        <div class="player-info">
-                                            <div>🏏 <b>On Strike</b><br>In Play</div>
-                                            <div style="border-left: 1px solid #444;"></div>
-                                            <div>🎾 <b>Bowling</b><br>Live Now</div>
-                                        </div>
-
-                                        <div class="commentary">📢 ${m.matchInfo.status}</div>
+                                        <h3>${m.matchInfo.team1.teamName} vs ${m.matchInfo.team2.teamName}</h3>
+                                        <div class="score-big">${sc?.team1Score?.inngs1?.runs || 0}/${sc?.team1Score?.inngs1?.wickets || 0} <small>(${sc?.team1Score?.inngs1?.overs || 0} ov)</small></div>
+                                        <div class="commentary">${m.matchInfo.status}</div>
                                     </div>`;
                             });
                         }
                     });
                 });
-                if(!foundLive) liveBox.innerHTML = "<p style='color:#8b949e'>No IPL matches live. KKR was 14/0 (2 ov) earlier!</p>";
 
-                // 2. Fetch Upcoming IPL
                 const upRes = await fetch('https://cricbuzz-cricket.p.rapidapi.com/matches/v1/upcoming', { headers });
                 const upData = await upRes.json();
                 upBox.innerHTML = "";
-                
                 upData.typeMatches.forEach(type => {
                     type.seriesMatches.forEach(series => {
                         if (series.seriesAdWrapper && series.seriesAdWrapper.seriesName.includes("Indian Premier League")) {
                             series.seriesAdWrapper.matches.slice(0, 4).forEach(m => {
                                 let d = new Date(parseInt(m.matchInfo.startDate)).toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short' });
-                                upBox.innerHTML += `
-                                    <div class="upcoming-card">
-                                        <div style="text-align:left">
-                                            <b style="color:#facc15">${m.matchInfo.team1.teamName} vs ${m.matchInfo.team2.teamName}</b><br>
-                                            <small style="color:#8b949e">${m.matchInfo.venueInfo.city}</small>
-                                        </div>
-                                        <div style="text-align:right"><b>${d}</b><br><small>7:30 PM</small></div>
-                                    </div>`;
+                                upBox.innerHTML += `<div class="upcoming-card"><div><b>${m.matchInfo.team1.teamName} vs ${m.matchInfo.team2.teamName}</b></div><div><b>${d}</b></div></div>`;
                             });
                         }
                     });
                 });
-            } catch (e) { console.error(e); }
-            if(btn) btn.innerText = "🔄 REFRESH SCOREBOARD";
+            } catch (e) { liveBox.innerHTML = "Offline - Refreshing..."; }
         }
     </script>
 </body>
