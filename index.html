@@ -1,89 +1,113 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
   <title>IPL 2026 Live Score</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-black text-white">
 
-  <div class="p-4 max-w-4xl mx-auto">
-    <h1 class="text-3xl font-bold text-center mb-6">IPL 2026 Live Score</h1>
+<div class="p-4 max-w-4xl mx-auto">
+  <h1 class="text-3xl font-bold text-center mb-6">🏏 IPL 2026 Live Score</h1>
 
-    <!-- LIVE MATCH -->
-    <div class="mb-8">
-      <h2 class="text-xl mb-2">Live Match</h2>
-      <div id="live" class="bg-gray-900 p-4 rounded-xl">Loading...</div>
-    </div>
+  <!-- LIVE / TODAY MATCH -->
 
-    <!-- UPCOMING MATCHES -->
-    <div>
-      <h2 class="text-xl mb-2">Upcoming Matches</h2>
-      <div id="upcoming" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-    </div>
+  <div class="mb-8">
+    <h2 class="text-xl mb-2">Today's Match</h2>
+    <div id="live" class="bg-gray-900 p-4 rounded-xl">Loading...</div>
   </div>
 
-  <script>
-    const API_KEY = "YOUR_API_KEY"; // replace
+  <!-- UPCOMING -->
 
-    async function fetchData() {
-      try {
-        const res = await fetch(`https://api.cricapi.com/v1/currentMatches?apikey=${API_KEY}&offset=0`);
-        const data = await res.json();
+  <div>
+    <h2 class="text-xl mb-2">Upcoming Matches</h2>
+    <div id="upcoming" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+  </div>
+</div>
 
-        const matches = data.data || [];
+<script>
+const API_KEY = "YOUR_API_KEY"; // 🔴 PUT YOUR KEY
 
-        // IPL filter
-        const iplMatches = matches.filter(m =>
-          m.name?.toLowerCase().includes("ipl") ||
-          m.series?.toLowerCase().includes("ipl")
-        );
+async function fetchData() {
+  try {
+    const res = await fetch(`https://api.cricapi.com/v1/currentMatches?apikey=${API_KEY}&offset=0`);
+    const data = await res.json();
 
-        // LIVE MATCH
-        const live = iplMatches.find(m =>
-          m.status?.toLowerCase().includes("live")
-        );
+    const matches = data.data || [];
 
-        const liveDiv = document.getElementById("live");
+    const liveDiv = document.getElementById("live");
 
-        if (live) {
-          liveDiv.innerHTML = `
-            <p class="text-red-500 font-bold">LIVE</p>
-            <h3 class="text-lg font-semibold">${live.name}</h3>
-            <p>${live.status}</p>
-            <div class="mt-2 text-green-400">
-              ${live.score?.map(s => `${s.inning}: ${s.r}/${s.w} (${s.o})`).join('<br>')}
-            </div>
-          `;
-        } else {
-          liveDiv.innerHTML = "No Live Match Now";
-        }
+    // ✅ STEP 1: Try LIVE match
+    let match = matches.find(m =>
+      m.status && m.status.toLowerCase().includes("live")
+    );
 
-        // UPCOMING
-        const upcomingMatches = iplMatches.filter(m => !m.matchStarted);
-        const upcomingDiv = document.getElementById("upcoming");
-        upcomingDiv.innerHTML = "";
-
-        upcomingMatches.slice(0, 6).forEach(match => {
-          const card = document.createElement("div");
-          card.className = "bg-gray-800 p-4 rounded-xl";
-          card.innerHTML = `
-            <h3 class="font-semibold">${match.name}</h3>
-            <p class="text-sm text-gray-400">${new Date(match.dateTimeGMT).toLocaleString()}</p>
-          `;
-          upcomingDiv.appendChild(card);
-        });
-
-      } catch (err) {
-        console.error(err);
-        document.getElementById("live").innerText = "Error loading data";
-      }
+    // ✅ STEP 2: If no live, show today's match
+    if (!match) {
+      const today = new Date().toDateString();
+      match = matches.find(m =>
+        new Date(m.dateTimeGMT).toDateString() === today
+      );
     }
 
-    fetchData();
-    setInterval(fetchData, 50000); // 50 sec refresh
-  </script>
+    // ✅ STEP 3: If still none, show first match
+    if (!match && matches.length > 0) {
+      match = matches[0];
+    }
+
+    // ✅ DISPLAY MATCH
+    if (match) {
+      liveDiv.innerHTML = `
+        <p class="text-red-500 font-bold">
+          ${match.status?.toLowerCase().includes("live") ? "🔴 LIVE" : "Match Info"}
+        </p>
+        <h3 class="text-lg font-semibold">${match.name}</h3>
+        <p>${match.status || "Match details not available"}</p>
+        <div class="mt-2 text-green-400">
+          ${match.score ? match.score.map(s => `${s.inning}: ${s.r}/${s.w} (${s.o})`).join('<br>') : "Score not available"}
+        </div>
+      `;
+    } else {
+      liveDiv.innerHTML = "No Match Data Available";
+    }
+
+    // ✅ UPCOMING MATCHES
+    const upcomingMatches = matches.filter(m => !m.matchStarted);
+
+    const upcomingDiv = document.getElementById("upcoming");
+    upcomingDiv.innerHTML = "";
+
+    if (upcomingMatches.length === 0) {
+      upcomingDiv.innerHTML = "<p>No upcoming matches found</p>";
+    }
+
+    upcomingMatches.slice(0, 6).forEach(match => {
+      const card = document.createElement("div");
+      card.className = "bg-gray-800 p-4 rounded-xl";
+
+      card.innerHTML = `
+        <h3 class="font-semibold">${match.name}</h3>
+        <p class="text-sm text-gray-400">
+          ${new Date(match.dateTimeGMT).toLocaleString()}
+        </p>
+      `;
+
+      upcomingDiv.appendChild(card);
+    });
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById("live").innerText = "❌ Error loading data";
+  }
+}
+
+// 🚀 RUN + AUTO REFRESH
+fetchData();
+setInterval(fetchData, 50000); // 50 sec
+</script>
 
 </body>
 </html>
