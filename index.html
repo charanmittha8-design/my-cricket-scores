@@ -1,65 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IPL 2026 Live Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background-color: #0d1117; color: white; font-family: sans-serif; }
-        .glass { background: rgba(22, 27, 34, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-        .live-pulse { height: 8px; width: 8px; background: #ef4444; border-radius: 50%; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IPL 2026 Live Score</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="min-h-screen p-4 flex flex-col items-center">
+<body class="bg-black text-white">
 
-    <div class="w-full max-w-md space-y-6">
-        <header class="text-center py-6">
-            <h1 class="text-2xl font-black text-yellow-500 italic">IPL 2026 LIVE</h1>
-        </header>
+  <div class="p-4 max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold text-center mb-6">IPL 2026 Live Score</h1>
 
-        <section>
-            <div class="flex items-center gap-2 mb-4">
-                <span class="live-pulse"></span>
-                <h2 class="text-xs font-bold uppercase tracking-widest text-gray-400">Match Results</h2>
-            </div>
-
-            <div class="glass rounded-[30px] p-6 shadow-2xl">
-                <div class="flex justify-between items-center mb-6">
-                    <div class="text-center">
-                        <p class="text-gray-400 font-bold text-xs">RR</p>
-                        <p class="text-3xl font-black">128/2</p>
-                        <p class="text-[10px] text-gray-500">12.0 OVERS</p>
-                    </div>
-                    <div class="text-gray-700 font-black italic text-xl">VS</div>
-                    <div class="text-center">
-                        <p class="text-gray-400 font-bold text-xs">CSK</p>
-                        <p class="text-3xl font-black text-gray-600">127</p>
-                        <p class="text-[10px] text-gray-500 uppercase">All Out</p>
-                    </div>
-                </div>
-
-                <div class="bg-green-500/10 border border-green-500/20 rounded-2xl p-3 text-center mb-4">
-                    <p class="text-green-400 text-xs font-bold uppercase">Rajasthan Royals won by 8 wickets!</p>
-                </div>
-
-                <div class="flex justify-between text-[11px] border-t border-white/5 pt-4">
-                    <div class="flex flex-col"><span class="text-white font-bold">V. Sooryavanshi</span><span class="text-gray-500">52 (17)</span></div>
-                    <div class="flex flex-col text-right"><span class="text-white font-bold">Y. Jaiswal</span><span class="text-gray-500">37 (35)</span></div>
-                </div>
-            </div>
-        </section>
-
-        <section class="opacity-50">
-            <h2 class="text-[10px] font-bold text-gray-600 uppercase mb-3">Previous Match</h2>
-            <div class="glass rounded-2xl p-4 flex justify-between items-center">
-                <span class="text-xs font-bold">MI 224/4</span>
-                <span class="text-[9px] text-gray-500 uppercase">MI Won</span>
-                <span class="text-xs font-bold text-gray-400">220/7 KKR</span>
-            </div>
-        </section>
+    <!-- LIVE MATCH -->
+    <div class="mb-8">
+      <h2 class="text-xl mb-2">Live Match</h2>
+      <div id="live" class="bg-gray-900 p-4 rounded-xl">Loading...</div>
     </div>
+
+    <!-- UPCOMING MATCHES -->
+    <div>
+      <h2 class="text-xl mb-2">Upcoming Matches</h2>
+      <div id="upcoming" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_KEY = "YOUR_API_KEY"; // replace
+
+    async function fetchData() {
+      try {
+        const res = await fetch(`https://api.cricapi.com/v1/currentMatches?apikey=${API_KEY}&offset=0`);
+        const data = await res.json();
+
+        const matches = data.data || [];
+
+        // IPL filter
+        const iplMatches = matches.filter(m =>
+          m.name?.toLowerCase().includes("ipl") ||
+          m.series?.toLowerCase().includes("ipl")
+        );
+
+        // LIVE MATCH
+        const live = iplMatches.find(m =>
+          m.status?.toLowerCase().includes("live")
+        );
+
+        const liveDiv = document.getElementById("live");
+
+        if (live) {
+          liveDiv.innerHTML = `
+            <p class="text-red-500 font-bold">LIVE</p>
+            <h3 class="text-lg font-semibold">${live.name}</h3>
+            <p>${live.status}</p>
+            <div class="mt-2 text-green-400">
+              ${live.score?.map(s => `${s.inning}: ${s.r}/${s.w} (${s.o})`).join('<br>')}
+            </div>
+          `;
+        } else {
+          liveDiv.innerHTML = "No Live Match Now";
+        }
+
+        // UPCOMING
+        const upcomingMatches = iplMatches.filter(m => !m.matchStarted);
+        const upcomingDiv = document.getElementById("upcoming");
+        upcomingDiv.innerHTML = "";
+
+        upcomingMatches.slice(0, 6).forEach(match => {
+          const card = document.createElement("div");
+          card.className = "bg-gray-800 p-4 rounded-xl";
+          card.innerHTML = `
+            <h3 class="font-semibold">${match.name}</h3>
+            <p class="text-sm text-gray-400">${new Date(match.dateTimeGMT).toLocaleString()}</p>
+          `;
+          upcomingDiv.appendChild(card);
+        });
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById("live").innerText = "Error loading data";
+      }
+    }
+
+    fetchData();
+    setInterval(fetchData, 50000); // 50 sec refresh
+  </script>
 
 </body>
 </html>
