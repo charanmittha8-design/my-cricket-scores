@@ -3,41 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IPL Command Center</title>
+    <title>IPL 2026 | Live Dashboard</title>
     <style>
-        body { margin: 0; background: #0d1117; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .card { width: 90%; max-width: 450px; background: #161b22; border-radius: 20px; padding: 30px; border: 1px solid #30363d; text-align: center; }
-        h1 { color: #facc15; font-size: 22px; margin-bottom: 20px; text-transform: uppercase; }
-        
-        /* This keeps the box from looking empty */
-        .match-box { background: #0d1117; border-radius: 12px; padding: 15px; margin-bottom: 20px; border-left: 4px solid #facc15; }
-        .score-big { font-size: 24px; font-weight: bold; margin: 10px 0; }
-        .result-text { color: #64ffda; font-size: 14px; font-style: italic; }
-        
-        .footer { font-size: 12px; color: #8b949e; margin-top: 20px; border-top: 1px solid #30363d; padding-top: 15px; }
+        :root {
+            --primary-gold: #facc15;
+            --dark-bg: #0d1117;
+            --card-bg: rgba(22, 27, 34, 0.8);
+            --border-glow: rgba(250, 204, 21, 0.2);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-bg);
+            background-image: radial-gradient(circle at 50% -20%, #1e293b, #0d1117);
+            font-family: 'Inter', -apple-system, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #ffffff;
+        }
+
+        .dashboard-card {
+            width: 90%;
+            max-width: 450px;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 28px;
+            padding: 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dashboard-card::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary-gold), transparent);
+        }
+
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        h1 {
+            font-size: 24px;
+            margin: 0 0 8px 0;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: #8b949e;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .widget-wrapper {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 20px;
+            padding: 15px;
+            min-height: 250px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .footer-info {
+            margin-top: 25px;
+            font-size: 11px;
+            color: #484f58;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .highlight {
+            color: var(--primary-gold);
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h1>IPL LIVE TRACKER</h1>
-
-        <div class="match-box">
-            <div style="font-size: 12px; color: #8b949e;">LATEST RESULT</div>
-            <div class="score-big">MI 224/4 beat KKR 220/4</div>
-            <div class="result-text">Mumbai Indians won by 6 wickets!</div>
-            <p style="font-size: 12px; margin-top: 10px;">Rohit: 78 | Rickelton: 81</p>
+    <div class="dashboard-card">
+        <div class="live-badge">
+            <span class="dot"></span> Live Match
         </div>
+        
+        <h1>IPL 2026</h1>
+        <p class="subtitle">Real-time Scorecard & Analytics</p>
 
-        <div id="live-area">
+        <div class="widget-wrapper">
             <script src="https://cricketdata.org/widgets/embed.js"></script>
-            <div class="cricket-widget" data-type="match-list" data-match-count="1" data-theme="dark"></div>
+            <div class="cricket-widget" 
+                 data-type="match-list" 
+                 data-match-count="1" 
+                 data-theme="dark">
+            </div>
         </div>
 
-        <div class="footer">
-            <b style="color: #facc15;">UPCOMING:</b><br>
-            Punjab vs Gujarat (Mar 31) <br>
-            Rajasthan vs Chennai (Tomorrow @ 7:30 PM)
+        <div class="footer-info">
+            Venue: <span class="highlight">Guwahati</span> • Match 03: <span class="highlight">RR vs CSK</span>
         </div>
     </div>
 
