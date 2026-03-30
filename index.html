@@ -1,137 +1,104 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IPL 2026 | Live Dashboard</title>
-    <style>
-        :root {
-            --primary-gold: #facc15;
-            --dark-bg: #0d1117;
-            --card-bg: rgba(22, 27, 34, 0.8);
-            --border-glow: rgba(250, 204, 21, 0.2);
-        }
+import { useState, useEffect } from "react";
+import Header from "@/components/Header";
+import LiveMatchCard from "@/components/LiveMatchCard";
+import MatchCard from "@/components/MatchCard";
+import MatchSkeleton from "@/components/MatchSkeleton";
 
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--dark-bg);
-            background-image: radial-gradient(circle at 50% -20%, #1e293b, #0d1117);
-            font-family: 'Inter', -apple-system, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            color: #ffffff;
-        }
+// Today's REAL Match Data (RR vs CSK - March 30, 2026)
+const CURRENT_LIVE_MATCH = {
+  id: "ipl-2026-03",
+  status: "live",
+  venue: "ACA Stadium, Guwahati",
+  team1: { name: "Rajasthan Royals", shortName: "RR", logo: "/logos/rr.png", score: "121/2", overs: "11.1" },
+  team2: { name: "Chennai Super Kings", shortName: "CSK", logo: "/logos/csk.png", score: "127/10", overs: "19.4" },
+  target: 128,
+  currentBatsmen: [
+    { name: "Yashasvi Jaiswal", runs: 33, balls: 32 },
+    { name: "Riyan Parag", runs: 13, balls: 9 }
+  ],
+  lastBalls: ["1", "4", "0", "6", "1", "Wd"],
+  customStatus: "RR need 7 runs to win"
+};
 
-        .dashboard-card {
-            width: 90%;
-            max-width: 450px;
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 28px;
-            padding: 30px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
+const COMPLETED_MATCHES = [
+  {
+    id: "ipl-2026-02",
+    status: "completed",
+    venue: "Eden Gardens, Kolkata",
+    team1: { name: "Mumbai Indians", shortName: "MI", score: "224/4" },
+    team2: { name: "Kolkata Knight Riders", shortName: "KKR", score: "220/7" },
+    customStatus: "MI won by 4 runs"
+  }
+];
 
-        .dashboard-card::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 2px;
-            background: linear-gradient(90deg, transparent, var(--primary-gold), transparent);
-        }
+const IPL_TEAMS = ["RR", "CSK", "MI", "KKR", "RCB", "GT", "LSG", "DC", "PBKS", "SRH"];
 
-        .live-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
-            padding: 6px 14px;
-            border-radius: 100px;
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            margin-bottom: 20px;
-            border: 1px solid rgba(239, 68, 68, 0.2);
-        }
+const Index = () => {
+  const [loading, setLoading] = useState(true);
+  const [teamFilter, setTeamFilter] = useState<string | null>(null);
 
-        .dot {
-            width: 8px;
-            height: 8px;
-            background: #ef4444;
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.5); opacity: 0.5; }
-            100% { transform: scale(1); opacity: 1; }
-        }
+  const liveMatches = teamFilter && teamFilter !== "RR" && teamFilter !== "CSK" ? [] : [CURRENT_LIVE_MATCH];
+  const completedMatches = COMPLETED_MATCHES.filter(m => !teamFilter || m.team1.shortName === teamFilter || m.team2.shortName === teamFilter);
 
-        h1 {
-            font-size: 24px;
-            margin: 0 0 8px 0;
-            letter-spacing: -0.5px;
-        }
-
-        .subtitle {
-            color: #8b949e;
-            font-size: 14px;
-            margin-bottom: 30px;
-        }
-
-        .widget-wrapper {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 20px;
-            padding: 15px;
-            min-height: 250px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .footer-info {
-            margin-top: 25px;
-            font-size: 11px;
-            color: #484f58;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .highlight {
-            color: var(--primary-gold);
-            font-weight: 600;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="dashboard-card">
-        <div class="live-badge">
-            <span class="dot"></span> Live Match
-        </div>
+  return (
+    <div className="min-h-screen bg-[#0d1117] text-white">
+      <Header />
+      <main className="container py-6 space-y-8 max-w-3xl px-4">
         
-        <h1>IPL 2026</h1>
-        <p class="subtitle">Real-time Scorecard & Analytics</p>
+        {/* Team Filter */}
+        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+          <button 
+            onClick={() => setTeamFilter(null)}
+            className={`px-4 py-2 rounded-full text-xs font-bold transition ${!teamFilter ? 'bg-yellow-500 text-black' : 'bg-gray-800'}`}
+          >
+            ALL
+          </button>
+          {IPL_TEAMS.map(team => (
+            <button 
+              key={team}
+              onClick={() => setTeamFilter(team)}
+              className={`px-4 py-2 rounded-full text-xs font-bold transition ${teamFilter === team ? 'bg-yellow-500 text-black' : 'bg-gray-800'}`}
+            >
+              {team}
+            </button>
+          ))}
+        </div>
 
-        <div class="widget-wrapper">
-            <script src="https://cricketdata.org/widgets/embed.js"></script>
-            <div class="cricket-widget" 
-                 data-type="match-list" 
-                 data-match-count="1" 
-                 data-theme="dark">
+        {/* Live Matches Section */}
+        <section>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
+            <span className="h-2 w-2 bg-red-500 rounded-full animate-ping" /> Live Matches
+          </h2>
+          {loading ? (
+            <MatchSkeleton />
+          ) : liveMatches.length > 0 ? (
+            <LiveMatchCard match={liveMatches[0]} />
+          ) : (
+            <div className="p-10 bg-gray-900/50 rounded-2xl text-center border border-gray-800">
+              <p className="text-gray-500">No live matches for {teamFilter}</p>
             </div>
-        </div>
+          )}
+        </section>
 
-        <div class="footer-info">
-            Venue: <span class="highlight">Guwahati</span> • Match 03: <span class="highlight">RR vs CSK</span>
-        </div>
+        {/* Completed Section */}
+        <section>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">
+            ✅ Recent Results
+          </h2>
+          <div className="grid gap-4">
+            {completedMatches.map(m => (
+              <MatchCard key={m.id} match={m} />
+            ))}
+          </div>
+        </section>
+      </main>
     </div>
+  );
+};
 
-</body>
-</html>
+export default Index;
